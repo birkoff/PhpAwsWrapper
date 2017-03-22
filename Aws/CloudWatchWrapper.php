@@ -19,7 +19,7 @@ class CloudWatchWrapper
     public function __construct($logGroupName, $logStreamName, $sequenceToken = null)
     {
         $sdk = new Sdk([
-            'profile' => 'default',
+            'profile' => 'sandbox',
             'region'  => 'eu-west-1',
             'version' => 'latest'
         ]);
@@ -34,8 +34,7 @@ class CloudWatchWrapper
     public function putLogEvents($message)
     {
         $timestamp = time() * 1000;
-
-        $result = $this->cloudWatchLogs->putLogEvents([
+        $event = [
             'logEvents' => [
                 [
                     'message'   => $message,
@@ -44,10 +43,14 @@ class CloudWatchWrapper
             ],
             'logGroupName' => $this->logGroupName,
             'logStreamName' => $this->logStreamName,
-            'sequenceToken' => $this->sequenceToken,
-        ]);
+        ];
 
+        if ($this->sequenceToken) {
+            $event['sequenceToken'] = $this->sequenceToken;
+        }
+        $result = $this->cloudWatchLogs->putLogEvents($event);
         $this->sequenceToken = $result['nextSequenceToken'];
+
         return $result;
     }
 
@@ -58,5 +61,10 @@ class CloudWatchWrapper
             'limit' => 15,
             'logGroupName' => $this->logGroupName,
         ]);
+    }
+
+    public function getSequenceToken()
+    {
+        return $this->sequenceToken;
     }
 }
